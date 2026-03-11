@@ -85,11 +85,8 @@ builder.Services.AddAuthentication(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
@@ -100,5 +97,8 @@ app.UseAuthorization();
 
 
 app.MapControllers();
+
+app.Urls.Add("http://0.0.0.0:8080");
+
 
 app.Run();
