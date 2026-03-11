@@ -1,7 +1,12 @@
-
-node_modules/
+# Build folders
 bin/
 obj/
+
+# Visual Studio files
 .vs/
-.env
-build/
+*.user
+*.suo
+*.log
+
+# Environment files
+appsettings.Development.json
