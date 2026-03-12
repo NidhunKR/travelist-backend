@@ -109,6 +109,56 @@ namespace Travelist.Controllers
 
             return Ok("Flight deleted");
         }
+        // SEED FLIGHTS DATA
+        [HttpPost("seed-flights")]
+        public async Task<IActionResult> SeedFlights()
+        {
+            var airlines = new[]
+            {
+        "Emirates","Qatar Airways","Singapore Airlines",
+        "Air India","Etihad Airways","Thai Airways",
+        "AirAsia","Garuda Indonesia"
+    };
+
+            var cities = new[]
+            {
+        new {Name="Dubai",Id=3},
+        new {Name="Phuket",Id=4},
+        new {Name="Singapore",Id=5},
+        new {Name="Kerala",Id=6},
+        new {Name="Bali",Id=7}
+    };
+
+            var flights = new List<Flight>();
+            var rand = new Random();
+
+            foreach (var from in cities)
+            {
+                foreach (var to in cities)
+                {
+                    if (from.Name == to.Name) continue;
+
+                    foreach (var airline in airlines)
+                    {
+                        flights.Add(new Flight
+                        {
+                            Airline = airline,
+                            DepartureCity = from.Name,
+                            ArrivalCity = to.Name,
+                            Price = rand.Next(200, 600),
+                            DepartureTime = DateTime.UtcNow.AddDays(rand.Next(1, 30)),
+                            ArrivalTime = DateTime.UtcNow.AddDays(rand.Next(1, 30)).AddHours(5),
+                            DestinationId = to.Id
+                        });
+                    }
+                }
+            }
+
+            _context.Flights.AddRange(flights);
+            await _context.SaveChangesAsync();
+
+            return Ok($"{flights.Count} flights added");
+        }
 
     }
 }
