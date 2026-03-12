@@ -1,68 +1,38 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
 using System.Text;
 using Travelist.Data;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
-
-// Add services to the container.
-
+// Add controllers
 builder.Services.AddControllers();
 
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("http://localhost:3000",
+            policy.WithOrigins(
+                "http://localhost:3000",
                 "https://travelist-frontend.onrender.com"
-                )
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod();
         });
 });
+
+// Database
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "Travelist API",
-        Version = "v1"
-    });
+builder.Services.AddSwaggerGen();
 
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        Scheme = "bearer",
-        BearerFormat = "JWT",
-        In = ParameterLocation.Header,
-        Description = "Enter JWT Token like this: Bearer {your token}"
-    });
-
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            new string[] {}
-        }
-    });
-});
-
+// Authentication
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -86,21 +56,22 @@ builder.Services.AddAuthentication(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Middleware order (IMPORTANT)
+
 app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
+
 app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
-app.UseStaticFiles();
 app.UseAuthorization();
 
+app.UseStaticFiles();
 
 app.MapControllers();
 
 app.Urls.Add("http://0.0.0.0:8080");
-
 
 app.Run();
