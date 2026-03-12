@@ -44,9 +44,19 @@ namespace Travelist.Controllers
         [HttpGet("search")]
         public async Task<IActionResult> SearchFlights(string from, string to, decimal? maxPrice)
         {
-            var query = _context.Flights
-                .Where(f => f.DepartureCity.ToLower() == from.ToLower() &&
-                            f.ArrivalCity.ToLower() == to.ToLower());
+            var query = _context.Flights.AsQueryable();
+
+            if (!string.IsNullOrEmpty(from))
+            {
+                query = query.Where(f =>
+                    f.DepartureCity.ToLower().Contains(from.ToLower()));
+            }
+
+            if (!string.IsNullOrEmpty(to))
+            {
+                query = query.Where(f =>
+                    f.ArrivalCity.ToLower().Contains(to.ToLower()));
+            }
 
             if (maxPrice.HasValue)
             {
