@@ -45,6 +45,7 @@ namespace Travelist.Controllers
 
             var user = new User
             {
+                Name = dto.Name,
                 Email = dto.Email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
                 Role = "User"
