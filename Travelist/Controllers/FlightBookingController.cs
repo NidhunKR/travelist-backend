@@ -16,19 +16,32 @@ namespace Travelist.Controllers
         {
             _context = context;
         }
+
+        // ✈ BOOK FLIGHT
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> BookFlight(FlightBooking booking)
         {
+            // Get userId from JWT token
+            var userId = int.Parse(User.FindFirst("nameid").Value);
+
+            booking.UserId = userId;
+            booking.Status = "Pending";
+            booking.BookingDate = DateTime.UtcNow;
+
             _context.FlightBookings.Add(booking);
             await _context.SaveChangesAsync();
 
             return Ok(booking);
         }
+
+        // 📄 GET MY BOOKINGS
         [Authorize]
         [HttpGet("my-bookings")]
-        public async Task<IActionResult> MyBookings(int userId)
+        public async Task<IActionResult> MyBookings()
         {
+            var userId = int.Parse(User.FindFirst("nameid").Value);
+
             var bookings = await _context.FlightBookings
                 .Where(b => b.UserId == userId)
                 .Include(b => b.Flight)
@@ -36,6 +49,8 @@ namespace Travelist.Controllers
 
             return Ok(bookings);
         }
+
+        // ❌ CANCEL BOOKING
         [Authorize]
         [HttpPut("{id}/cancel")]
         public async Task<IActionResult> CancelBooking(int id)
