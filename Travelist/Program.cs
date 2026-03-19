@@ -9,13 +9,16 @@ var builder = WebApplication.CreateBuilder(args);
 // Controllers
 builder.Services.AddControllers();
 
-// ✅ CORS (WORKS FOR LOCAL + RENDER)
+// ✅ CORS (LOCAL + RENDER FIX)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .SetIsOriginAllowed(origin => true) // ✅ allow all (safe for dev)
+            .WithOrigins(
+                "http://localhost:3000",
+                "https://travelist-frontend.onrender.com"
+            )
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -25,7 +28,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Swagger
+// Swagger + JWT AUTH BUTTON ✅
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -75,34 +78,18 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(key)
     };
-
-    // ✅ Read token properly
-    options.Events = new JwtBearerEvents
-    {
-        OnMessageReceived = context =>
-        {
-            var authHeader = context.Request.Headers["Authorization"].ToString();
-
-            if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer "))
-            {
-                context.Token = authHeader.Substring("Bearer ".Length);
-            }
-
-            return Task.CompletedTask;
-        }
-    };
 });
 
 var app = builder.Build();
 
-// ✅ VERY IMPORTANT ORDER
-
-app.UseCors("AllowFrontend"); // FIRST
-
+// ✅ CORRECT ORDER (VERY IMPORTANT)
 app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
+
+// 🔥 MUST be before auth
+app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
 app.UseAuthorization();
