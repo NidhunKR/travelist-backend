@@ -84,11 +84,9 @@ var app = builder.Build();
 
 // Middleware order (IMPORTANT)
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
+
 app.UseHttpsRedirection();
 
 app.UseCors("AllowFrontend");
