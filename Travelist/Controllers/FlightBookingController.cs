@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Travelist.Data;
 using Travelist.Models;
+using System.Security.Claims;
 
 namespace Travelist.Controllers
 {
@@ -18,13 +19,21 @@ namespace Travelist.Controllers
         }
 
         // ✈ BOOK FLIGHT
+
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> BookFlight(FlightBooking booking)
         {
             try
             {
-                var userId = int.Parse(User.FindFirst("nameid").Value);
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+                if (userIdClaim == null)
+                {
+                    return Unauthorized("User ID claim missing");
+                }
+
+                var userId = int.Parse(userIdClaim.Value);
 
                 booking.UserId = userId;
                 booking.Status = "Pending";
@@ -37,7 +46,7 @@ namespace Travelist.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ex.Message); // 🔥 SHOW REAL ERROR
+                return StatusCode(500, ex.Message);
             }
         }
 
