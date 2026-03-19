@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -6,22 +6,19 @@ using Travelist.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add controllers
+// Controllers
 builder.Services.AddControllers();
 
-// CORS
+// ✅ CORS (WORKS FOR LOCAL + RENDER)
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend",
-        policy =>
-        {
-            policy.WithOrigins(
-                "http://localhost:3000",
-                "https://travelist-frontend.onrender.com"
-            )
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy
+            .SetIsOriginAllowed(origin => true) // ✅ allow all (safe for dev)
             .AllowAnyHeader()
             .AllowAnyMethod();
-        });
+    });
 });
 
 // Database
@@ -39,7 +36,7 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "bearer",
         BearerFormat = "JWT",
         In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Description = "Enter JWT Token like: Bearer {your token}"
+        Description = "Enter: Bearer {your token}"
     });
 
     options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
@@ -58,7 +55,7 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-// Authentication
+// ✅ Authentication
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -78,26 +75,38 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(key)
     };
+
+    // ✅ Read token properly
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var authHeader = context.Request.Headers["Authorization"].ToString();
+
+            if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer "))
+            {
+                context.Token = authHeader.Substring("Bearer ".Length);
+            }
+
+            return Task.CompletedTask;
+        }
+    };
 });
 
 var app = builder.Build();
 
-// Middleware order (IMPORTANT)
+// ✅ VERY IMPORTANT ORDER
+
+app.UseCors("AllowFrontend"); // FIRST
 
 app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
-app.UseCors("AllowFrontend");
-
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseStaticFiles();
-
 app.MapControllers();
-
-app.Urls.Add("http://0.0.0.0:8080");
 
 app.Run();
