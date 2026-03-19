@@ -52,14 +52,20 @@ namespace Travelist.Controllers
 
         // 📄 GET MY BOOKINGS
         [Authorize]
-        [HttpGet("my-bookings")]
+        [HttpGet("my")]
         public async Task<IActionResult> MyBookings()
         {
-            var userId = int.Parse(User.FindFirst("nameid").Value);
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null)
+            {
+                return Unauthorized("User ID not found");
+            }
+
+            var userId = int.Parse(userIdClaim.Value);
 
             var bookings = await _context.FlightBookings
                 .Where(b => b.UserId == userId)
-                .Include(b => b.Flight)
                 .ToListAsync();
 
             return Ok(bookings);
