@@ -18,21 +18,27 @@ namespace Travelist.Controllers
         }
 
         // ✈ BOOK FLIGHT
-        [Authorize]
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> BookFlight(FlightBooking booking)
         {
-            // Get userId from JWT token
-            var userId = int.Parse(User.FindFirst("nameid").Value);
+            try
+            {
+                var userId = int.Parse(User.FindFirst("nameid").Value);
 
-            booking.UserId = userId;
-            booking.Status = "Pending";
-            booking.BookingDate = DateTime.UtcNow;
+                booking.UserId = userId;
+                booking.Status = "Pending";
+                booking.BookingDate = DateTime.UtcNow;
 
-            _context.FlightBookings.Add(booking);
-            await _context.SaveChangesAsync();
+                _context.FlightBookings.Add(booking);
+                await _context.SaveChangesAsync();
 
-            return Ok(booking);
+                return Ok(booking);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message); // 🔥 SHOW REAL ERROR
+            }
         }
 
         // 📄 GET MY BOOKINGS
