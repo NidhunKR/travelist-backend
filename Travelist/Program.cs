@@ -83,6 +83,7 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 
 // 🔥 CORS must be BEFORE auth
 app.UseCors("AllowFrontend");
